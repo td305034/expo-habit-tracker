@@ -13,7 +13,7 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
           router.replace("/auth/sign-in");
         }, 1)
     }
-  });
+  }, [isAuth]);
 
   return <>{children}</>
 }
