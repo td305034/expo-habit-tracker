@@ -1,3 +1,4 @@
+import { AuthProvider } from '@/lib/auth-context';
 import * as eva from '@eva-design/eva';
 import { ApplicationProvider } from "@ui-kitten/components";
 import { Stack, useRouter } from "expo-router";
@@ -11,7 +12,7 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
     if (!isAuth) {
       setTimeout(() => {
           router.replace("/auth/sign-in");
-        }, 1)
+        }, 0.5)
     }
   }, [isAuth]);
 
@@ -20,11 +21,13 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
 export default function RootLayout() {
   return (
     <ApplicationProvider {...eva} theme={eva.light} >
+      <AuthProvider>
         <RouteGuard>
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           </Stack>
         </RouteGuard>
+      </AuthProvider>
     </ApplicationProvider>
   )
 }

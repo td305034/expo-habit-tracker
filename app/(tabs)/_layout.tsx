@@ -1,7 +1,6 @@
-import { Stack, Tabs } from "expo-router";
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import { Tabs } from "expo-router";
 
 export default function RootLayout() {
   return <Tabs>
@@ -9,13 +8,13 @@ export default function RootLayout() {
       title: "Home",
       tabBarIcon: ({ color }) => (<FontAwesome5 name="home" size={24} color={color} />)
     }} />
-    <Tabs.Screen name="login" options={{
-      title: "Login",
+    <Tabs.Screen name="test" options={{
+      title: "Test",
       tabBarIcon: ({ color, focused }) => {
         return focused ?
-          (<MaterialCommunityIcons name="brightness-percent" size={24} color={color} />)
+          (<FontAwesome name="thumbs-o-up" size={24} color={color} />)
           :
-          (<FontAwesome6 name="percent" size={24} color={color} />)
+          (<FontAwesome name="thumbs-up" size={24} color={color} />)
       }
     }} />
   </Tabs>
