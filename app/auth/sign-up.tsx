@@ -43,54 +43,56 @@ export default function SignUpScreen() {
     }
 
     return (
-            <KeyboardAvoidingView
-            style = {styles.container}>
-                <View style = {styles.content}>
-                    <Text category="h1" style={styles.title}>Create Account</Text>
-                    <Input
-                        label="Imie"
-                        autoCapitalize="words"
-                        keyboardType="email-address"
-                        placeholder="John"
-                        size="large"
-                        style={styles.input}
-                        onChangeText={setName}
-                    />
-                    <Input
-                        label="Nazwisko"
-                        autoCapitalize="words"
-                        keyboardType="email-address"
-                        placeholder="Snow"
-                        size="large"
-                        style={styles.input}
-                        onChangeText={setSurname}
-                    />
-                    <Input
-                        label="Email"
-                        autoCapitalize="none"
-                        keyboardType="email-address"
-                        placeholder="example@gmail.com"
-                        size="large"
-                        style = {styles.input}
-                        onChangeText={setEmail}    
-                    />
-                    <Input
-                        label="Password"
-                        autoCapitalize="none"
-                        placeholder="Enter password"
-                        secureTextEntry
-                        size="large"
-                        style = {styles.input}
-                        onChangeText={setPassword}
+        <KeyboardAvoidingView
+        style = {styles.container}
+        behavior="height">
+            <View style = {styles.content}>
+                <Text category="h1" style={styles.title}>Create Account</Text>
+                <Input
+                    label="Imie"
+                    autoCapitalize="words"
+                    keyboardType="email-address"
+                    placeholder="John"
+                    size="large"
+                    style={styles.input}
+                    onChangeText={setName}
                 />
-                {error && 
-                    <Text style={{ color: theme['color-danger-700'] }}>{error}</Text>
-                    }
-                    <Button style={styles.btn} onPress={handleSignUp}>Sign up!</Button>
-                    <Button style={styles.btn} onPress={handleGoToSignIn} appearance='ghost'>
-                        Already have an account? Sign in then!
-                    </Button>
-                </View>
+                <Input
+                    label="Nazwisko"
+                    autoCapitalize="words"
+                    keyboardType="email-address"
+                    placeholder="Snow"
+                    size="large"
+                    style={styles.input}
+                    onChangeText={setSurname}
+                />
+                <Input
+                    label="Email"
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    placeholder="example@gmail.com"
+                    size="large"
+                    style = {styles.input}
+                    onChangeText={setEmail}    
+                />
+                <Input
+                    label="Password"
+                    autoCapitalize="none"
+                    placeholder="Enter password"
+                    secureTextEntry
+                    
+                    size="large"
+                    style = {styles.input}
+                    onChangeText={setPassword}
+            />
+            {error && 
+                <Text style={{ color: theme['color-danger-700'] }}>{error}</Text>
+                }
+                <Button style={styles.btn} onPress={handleSignUp}>Sign up!</Button>
+                <Button style={styles.btn} onPress={handleGoToSignIn} appearance='ghost'>
+                    Already have an account? Sign in then!
+                </Button>
+            </View>
         
             </KeyboardAvoidingView>
     )

@@ -14,9 +14,7 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
     
     if (!isUserLoading) {
       if (!user && !inAuthGroup) {
-        setTimeout(() => {
         router.replace("/auth/sign-in");
-          }, 0.5)
       } else if (user && inAuthGroup) {
         router.replace("/")
       }

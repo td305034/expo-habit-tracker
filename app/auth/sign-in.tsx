@@ -40,7 +40,8 @@ export default function SignInScreen() {
     }
     return (
             <KeyboardAvoidingView
-            style = {styles.container}>
+            style={styles.container}
+            behavior="height">
                 <View style = {styles.content}>
                     <Text category="h1" style={styles.title}>Sign in, user!</Text>
                     <Input

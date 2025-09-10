@@ -5,8 +5,9 @@ import { account } from "./appwrite";
 type AuthContextTypes = {
     user: Models.User<Models.Preferences> | null;
     isUserLoading: boolean;
-    signUp: (name:string, surname: string, email: string, password: string) => Promise<string | undefined>;
-    signIn: (email: string, password: string) => Promise<string | undefined>;
+    signUp: (name:string, surname: string, email: string, password: string) => Promise<string | null>;
+    signIn: (email: string, password: string) => Promise<string | null>;
+    signOut: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextTypes | undefined>(undefined);
@@ -32,6 +33,7 @@ export function AuthProvider({ children }: {children: React.ReactNode}) {
         try {
             await account.create(ID.unique(), email, password, name + " " + surname);
             await signIn(email, password);
+            return null;
         } catch (error) {
             if (error instanceof Error) {
                 return error.message;
@@ -41,7 +43,10 @@ export function AuthProvider({ children }: {children: React.ReactNode}) {
     }
     const signIn = async (email: string, password: string) => {
         try {
-            account.createEmailPasswordSession(email, password);
+            await account.createEmailPasswordSession(email, password);
+            const session = await account.get();
+            setUser(session);
+            return null;
         } catch (error) {
             if (error instanceof Error) {
                 return error.message;
@@ -49,8 +54,21 @@ export function AuthProvider({ children }: {children: React.ReactNode}) {
             return "An error occured during sign up.";
         }
     }
+
+    const signOut = async () => {
+        try {
+            await account.deleteSession("current");
+            setUser(null);
+            return null;
+        } catch (error) {
+            if (error instanceof Error) {
+                return error.message;
+            }
+            return "An error occured during sign out.";
+        }
+    }
     return (
-        <AuthContext.Provider value={{ user, isUserLoading, signUp, signIn }}>
+        <AuthContext.Provider value={{ user, isUserLoading, signUp, signIn, signOut }}>
             {children}
         </AuthContext.Provider>
     )
