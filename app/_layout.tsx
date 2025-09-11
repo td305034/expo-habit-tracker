@@ -19,7 +19,7 @@ function RouteGuard({ children }: { children: React.ReactNode }) {
         router.replace("/")
       }
     }
-  }, [user, segments, isUserLoading]);
+  }, [user, segments]);
 
   return <>{children}</>
 }
