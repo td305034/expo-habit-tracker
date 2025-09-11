@@ -3,6 +3,7 @@ import * as eva from '@eva-design/eva';
 import { ApplicationProvider } from "@ui-kitten/components";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 function RouteGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -27,11 +28,13 @@ export default function RootLayout() {
   return (
     <ApplicationProvider {...eva} theme={eva.light} >
       <AuthProvider>
-        <RouteGuard>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          </Stack>
-        </RouteGuard>
+        <SafeAreaProvider>
+          <RouteGuard>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            </Stack>
+          </RouteGuard>
+          </SafeAreaProvider>
       </AuthProvider>
     </ApplicationProvider>
   )

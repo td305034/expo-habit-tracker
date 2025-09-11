@@ -3,7 +3,7 @@ import * as eva from '@eva-design/eva';
 import { ApplicationProvider, Button, Layout, Text } from '@ui-kitten/components';
 import { StyleSheet } from "react-native";
 
-export default function Index() {
+export default function IndexScreen() {
   const { signOut } = useAuth();
   return (
     <ApplicationProvider {...eva} theme={eva.light} >
