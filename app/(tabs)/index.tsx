@@ -1,15 +1,24 @@
-import { client, databases, DB_ID, HABITS_TABLE_ID, RealtimeResponse } from "@/lib/appwrite";
+import {
+  client,
+  databases,
+  DB_ID,
+  HABITS_TABLE_ID,
+  RealtimeResponse,
+} from "@/lib/appwrite";
 import { useAuth } from "@/lib/auth-context";
 import { Habit } from "@/types/database.type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Button, Card, Text } from '@ui-kitten/components';
-import { useEffect, useState } from "react";
+import { Button, Card, Text } from "@ui-kitten/components";
+import React, { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { Query } from "react-native-appwrite";
+import { Swipeable } from "react-native-gesture-handler";
 
 export default function IndexScreen() {
   const { signOut, user } = useAuth();
   const [habits, setHabits] = useState<Habit[]>();
+
+  const swipeableRefs = useRef<{ [key: string]: Swipeable | null }>({});
 
   useEffect(() => {
     if (user) {
@@ -17,7 +26,11 @@ export default function IndexScreen() {
       const habitsSubscription = client.subscribe(
         channel,
         (response: RealtimeResponse) => {
-          if (response.events.includes("databases.*.collections.*.documents.*.create")) {
+          if (
+            response.events.includes(
+              "databases.*.collections.*.documents.*.create"
+            )
+          ) {
             fetchHabits();
           }
         }
@@ -26,55 +39,115 @@ export default function IndexScreen() {
 
       return () => {
         habitsSubscription();
-      }
+      };
     }
   }, [user]);
 
   const fetchHabits = async () => {
     try {
-      const response = await databases.listDocuments(
-        DB_ID,
-        HABITS_TABLE_ID,
-        [Query.equal("user_id", user?.$id ?? "")])
+      const response = await databases.listDocuments(DB_ID, HABITS_TABLE_ID, [
+        Query.equal("user_id", user?.$id ?? ""),
+      ]);
       setHabits(response.documents as unknown as Habit[]);
     } catch (error) {
       console.error(error);
     }
-  }
+  };
+
+  const handleDeleteHabit = async (id: string) => {
+    try {
+      await databases.deleteDocument(DB_ID, HABITS_TABLE_ID, id);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      fetchHabits();
+    }
+  };
+  const handleCompleteHabit = async (id: string) => {};
+  const renderLeftActions = () => {
+    return (
+      <View style={styles.swipeActionRight}>
+        <MaterialCommunityIcons
+          name="trash-can-outline"
+          size={32}
+          color={"#fff"}
+        ></MaterialCommunityIcons>
+      </View>
+    );
+  };
+  const renderRightActions = () => {
+    return (
+      <View style={styles.swipeActionLeft}>
+        <MaterialCommunityIcons
+          name="check-circle-outline"
+          size={32}
+          color={"#fff"}
+        ></MaterialCommunityIcons>
+      </View>
+    );
+  };
+
   return (
-    <View style = {styles.container}>
-      <View style = {styles.header}>
-        <Text category="h3" style = {styles.title}>Today's habits</Text>    
-        <Button appearance="ghost" onPress={ signOut }>Sign out</Button>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text category="h3" style={styles.title}>
+          Today's habits
+        </Text>
+        <Button appearance="ghost" onPress={signOut}>
+          Sign out
+        </Button>
       </View>
 
-      <ScrollView>
-      {habits?.length === 0 ? (
-        <View style = {styles.emptyState}><Text style = {styles.emptyStateText}>No habits for today.</Text></View>
-      ) : (
-          habits?.map((habit, key) =>
-            <Card style = {styles.card}>
-              <View style={styles.cardView}  key={key}>
-                <Text style = {styles.cardTitle}>{habit.title}</Text>
-                <Text style = {styles.cardDesc}>{habit.description}</Text>
-                <View style = {styles.cardFooter}>
-                  <View style = {styles.streakBadge}>
-                    <MaterialCommunityIcons name="fire" size={18} color="orange" />
-                    <Text style = {styles.streakText}>{habit.streak_count} day streak</Text>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {habits?.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No habits for today.</Text>
+          </View>
+        ) : (
+          habits?.map((habit, key) => (
+            <Swipeable
+              ref={(ref) => {
+                swipeableRefs.current[habit.$id] = ref;
+              }}
+              key={key}
+              overshootLeft={false}
+              overshootRight={false}
+              renderLeftActions={renderLeftActions}
+              renderRightActions={renderRightActions}
+              onSwipeableOpen={(direction) => {
+                direction == "right"
+                  ? handleCompleteHabit(habit.$id)
+                  : handleDeleteHabit(habit.$id);
+                swipeableRefs.current[habit.$id]?.close();
+              }}
+            >
+              <Card style={styles.card}>
+                <View style={styles.cardView}>
+                  <Text style={styles.cardTitle}>{habit.title}</Text>
+                  <Text style={styles.cardDesc}>{habit.description}</Text>
+                  <View style={styles.cardFooter}>
+                    <View style={styles.streakBadge}>
+                      <MaterialCommunityIcons
+                        name="fire"
+                        size={18}
+                        color="orange"
+                      />
+                      <Text style={styles.streakText}>
+                        {habit.streak_count} day streak
+                      </Text>
+                    </View>
+                    <View style={styles.freqBadge}>
+                      <Text style={styles.freqText}>{habit.frequency}</Text>
+                    </View>
                   </View>
-                  <View style = {styles.freqBadge}>
-                    <Text style = {styles.freqText}>{habit.frequency}</Text>
-                  </View>
-              </View>
-              </View>
-            </Card>
-          )
-
+                </View>
+              </Card>
+            </Swipeable>
+          ))
         )}
       </ScrollView>
-    </View> 
+    </View>
   );
-  
 }
 
 const styles = StyleSheet.create({
@@ -105,11 +178,11 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
 
     //elevation for android
-    elevation: 5, 
+    elevation: 5,
   },
   cardView: {
     marginHorizontal: -8,
-    marginVertical: -4
+    marginVertical: -4,
   },
   cardTitle: {
     fontSize: 20,
@@ -119,12 +192,12 @@ const styles = StyleSheet.create({
   cardDesc: {
     fontSize: 16,
     marginBottom: 24,
-    color: "#555"
+    color: "#555",
   },
   cardFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center"
+    alignItems: "center",
   },
   streakBadge: {
     flexDirection: "row",
@@ -133,11 +206,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    elevation: 1
+    elevation: 1,
   },
   streakText: {
     marginLeft: 6,
-    color: "#be7200ff"
+    color: "#be7200ff",
   },
   freqBadge: {
     backgroundColor: "#bbd0ffff",
@@ -145,11 +218,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     elevation: 1,
-    justifyContent: "center"
+    justifyContent: "center",
   },
   freqText: {
     color: "#2b5dc7ff",
-    textTransform: "capitalize"
+    textTransform: "capitalize",
   },
 
   emptyState: {
@@ -158,6 +231,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyStateText: {
-    color: "#666"
-  }
-})
+    color: "#666",
+  },
+  swipeActionLeft: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "flex-end",
+    borderRadius: 18,
+    marginBottom: 12,
+    marginTop: 2,
+    paddingRight: 16,
+    backgroundColor: "#4caf50",
+  },
+  swipeActionRight: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "flex-start",
+    borderRadius: 18,
+    marginBottom: 12,
+    marginTop: 2,
+    paddingLeft: 16,
+    backgroundColor: "#e53935",
+  },
+});
