@@ -2,6 +2,7 @@ import {
   client,
   databases,
   DB_ID,
+  HABITS_COMPLETION_TABLE_ID,
   HABITS_TABLE_ID,
   RealtimeResponse,
 } from "@/lib/appwrite";
@@ -11,20 +12,21 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Button, Card, Text } from "@ui-kitten/components";
 import React, { useEffect, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { Query } from "react-native-appwrite";
+import { ID, Query } from "react-native-appwrite";
 import { Swipeable } from "react-native-gesture-handler";
 
 export default function IndexScreen() {
   const { signOut, user } = useAuth();
   const [habits, setHabits] = useState<Habit[]>();
+  const [completions, setCompletions] = useState<string[]>([""]);
 
   const swipeableRefs = useRef<{ [key: string]: Swipeable | null }>({});
 
   useEffect(() => {
     if (user) {
-      const channel = `databases.${DB_ID}.collections.${HABITS_TABLE_ID}.documents`;
+      const habitsChannel = `databases.${DB_ID}.collections.${HABITS_TABLE_ID}.documents`;
       const habitsSubscription = client.subscribe(
-        channel,
+        habitsChannel,
         (response: RealtimeResponse) => {
           if (
             response.events.includes(
@@ -33,12 +35,42 @@ export default function IndexScreen() {
           ) {
             fetchHabits();
           }
+          if (
+            response.events.includes(
+              "databases.*.collections.*.documents.*.delete"
+            )
+          ) {
+            fetchHabits();
+          }
+          if (
+            response.events.includes(
+              "databases.*.collections.*.documents.*.update"
+            )
+          ) {
+            fetchHabits();
+          }
+        }
+      );
+
+      const completionsChannel = `databases.${DB_ID}.collections.${HABITS_COMPLETION_TABLE_ID}.documents`;
+      const completionsSubscription = client.subscribe(
+        completionsChannel,
+        (response: RealtimeResponse) => {
+          if (
+            response.events.includes(
+              "databases.*.collections.*.documents.*.create"
+            )
+          ) {
+            fetchTodaysCompletions();
+          }
         }
       );
       fetchHabits();
+      fetchTodaysCompletions();
 
       return () => {
         habitsSubscription();
+        completionsSubscription();
       };
     }
   }, [user]);
@@ -53,6 +85,27 @@ export default function IndexScreen() {
       console.error(error);
     }
   };
+  const fetchTodaysCompletions = async () => {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const response = await databases.listDocuments(
+        DB_ID,
+        HABITS_COMPLETION_TABLE_ID,
+        [
+          Query.equal("user_id", user?.$id ?? ""),
+          Query.greaterThanEqual("completed_at", today.toISOString()),
+        ]
+      );
+      const completedHabits = response.documents;
+      setCompletions(completedHabits.map((c) => c.habit_id));
+      completions.forEach((el) => {
+        console.log(el);
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const handleDeleteHabit = async (id: string) => {
     try {
@@ -63,7 +116,32 @@ export default function IndexScreen() {
       fetchHabits();
     }
   };
-  const handleCompleteHabit = async (id: string) => {};
+  const handleCompleteHabit = async (id: string) => {
+    if (!user || completions.includes(id)) return;
+    try {
+      const currentDate = new Date().toISOString();
+      await databases.createDocument(
+        DB_ID,
+        HABITS_COMPLETION_TABLE_ID,
+        ID.unique(),
+        {
+          habit_id: id,
+          user_id: user.$id,
+          completed_at: currentDate,
+        }
+      );
+
+      const habit = habits?.find((h) => h.$id === id);
+      if (!habit) return;
+
+      await databases.updateDocument(DB_ID, HABITS_TABLE_ID, id, {
+        streak_count: habit.streak_count + 1,
+        last_completed: currentDate,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
   const renderLeftActions = () => {
     return (
       <View style={styles.swipeActionRight}>
