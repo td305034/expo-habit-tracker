@@ -99,9 +99,6 @@ export default function IndexScreen() {
       );
       const completedHabits = response.documents;
       setCompletions(completedHabits.map((c) => c.habit_id));
-      completions.forEach((el) => {
-        console.log(el);
-      });
     } catch (error) {
       console.error(error);
     }
@@ -142,6 +139,7 @@ export default function IndexScreen() {
       console.error(error);
     }
   };
+
   const renderLeftActions = () => {
     return (
       <View style={styles.swipeActionRight}>
@@ -153,17 +151,23 @@ export default function IndexScreen() {
       </View>
     );
   };
-  const renderRightActions = () => {
+  const renderRightActions = (habitId: string) => {
     return (
       <View style={styles.swipeActionLeft}>
-        <MaterialCommunityIcons
-          name="check-circle-outline"
-          size={32}
-          color={"#fff"}
-        ></MaterialCommunityIcons>
+        {isHabitCompleted(habitId) ? (
+          <Text style={{ color: "#fff" }}>Completed</Text>
+        ) : (
+          <MaterialCommunityIcons
+            name="check-circle-outline"
+            size={32}
+            color={"#fff"}
+          ></MaterialCommunityIcons>
+        )}
       </View>
     );
   };
+
+  const isHabitCompleted = (id: string) => completions.includes(id);
 
   return (
     <View style={styles.container}>
@@ -191,7 +195,7 @@ export default function IndexScreen() {
               overshootLeft={false}
               overshootRight={false}
               renderLeftActions={renderLeftActions}
-              renderRightActions={renderRightActions}
+              renderRightActions={() => renderRightActions(habit.$id)}
               onSwipeableOpen={(direction) => {
                 direction == "right"
                   ? handleCompleteHabit(habit.$id)
@@ -199,12 +203,22 @@ export default function IndexScreen() {
                 swipeableRefs.current[habit.$id]?.close();
               }}
             >
-              <Card style={styles.card}>
+              <Card
+                style={[
+                  styles.card,
+                  isHabitCompleted(habit.$id) && styles.cardCompleted,
+                ]}
+              >
                 <View style={styles.cardView}>
                   <Text style={styles.cardTitle}>{habit.title}</Text>
                   <Text style={styles.cardDesc}>{habit.description}</Text>
                   <View style={styles.cardFooter}>
-                    <View style={styles.streakBadge}>
+                    <View
+                      style={[
+                        styles.streakBadge,
+                        isHabitCompleted(habit.$id) && { opacity: 0.5 },
+                      ]}
+                    >
                       <MaterialCommunityIcons
                         name="fire"
                         size={18}
@@ -214,7 +228,12 @@ export default function IndexScreen() {
                         {habit.streak_count} day streak
                       </Text>
                     </View>
-                    <View style={styles.freqBadge}>
+                    <View
+                      style={[
+                        styles.freqBadge,
+                        isHabitCompleted(habit.$id) && { opacity: 0.5 },
+                      ]}
+                    >
                       <Text style={styles.freqText}>{habit.frequency}</Text>
                     </View>
                   </View>
@@ -257,6 +276,9 @@ const styles = StyleSheet.create({
 
     //elevation for android
     elevation: 5,
+  },
+  cardCompleted: {
+    opacity: 0.5,
   },
   cardView: {
     marginHorizontal: -8,
